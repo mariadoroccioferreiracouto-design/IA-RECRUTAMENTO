@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IA Recrutamento Teste</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.container{
+    width:95%;
+    max-width:480px;
+    height:92vh;
+    background:white;
+    border-radius:14px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 0 30px rgba(0,0,0,0.4);
+}
+
+.header{
+    background:linear-gradient(90deg,#0f766e,#14b8a6);
+    color:white;
+    padding:14px;
+    text-align:center;
+    font-weight:bold;
+    font-size:16px;
+}
+
+.chat{
+    flex:1;
+    padding:12px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+}
+
+.msg{
+    margin:6px 0;
+    padding:8px 12px;
+    border-radius:12px;
+    max-width:80%;
+    font-size:14px;
+}
+
+.bot{
+    background:#e2e8f0;
+    align-self:flex-start;
+}
+
+.user{
+    background:#14b8a6;
+    color:white;
+    align-self:flex-end;
+}
+
+.input-area{
+    display:flex;
+    border-top:1px solid #ccc;
+}
+
+input{
+    flex:1;
+    padding:10px;
+    border:none;
+    outline:none;
+}
+
+button{
+    padding:10px;
+    border:none;
+    background:#0f766e;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#115e59;
+}
+
+.progress-container{
+    background:#ddd;
+    height:10px;
+    border-radius:5px;
+    overflow:hidden;
+}
+
+.progress{
+    height:10px;
+    background:#14b8a6;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="header">IA RECRUTAMENTO TESTE - Entrevista Inteligente</div>
+    <div class="chat" id="chat"></div>
+    <div class="input-area">
+        <input type="text" id="input" placeholder="Digite sua resposta...">
+        <button id="btn">Enviar</button>
+    </div>
+</div>
+
+<script>
+
+let etapa = 0;
+let nome = "";
+let respostas = {};
+let pontuacao = 0;
+
+const perguntas = [
+"Olá 👋 Seja bem-vindo(a). Qual seu nome?",
+"Prazer, {nome}. Fale sobre sua experiência profissional.",
+"Quantos anos de experiência você possui?",
+"Como você reage sob pressão?",
+"Você já liderou equipes? Explique.",
+"Descreva um desafio profissional que enfrentou."
+];
+
+function addMensagem(texto,classe){
+    const chat=document.getElementById("chat");
+    const div=document.createElement("div");
+    div.className="msg "+classe;
+    div.innerHTML=texto;
+    chat.appendChild(div);
+    chat.scrollTop=chat.scrollHeight;
+}
+
+function proxima(resposta){
+
+    respostas["Pergunta_"+etapa] = resposta;
+
+    if(etapa===0){
+        nome = resposta;
+    }
+
+    if(etapa>0){
+        pontuacao += resposta.length>10 ? 2 : 1;
+    }
+
+    etapa++;
+
+    if(etapa < perguntas.length){
+        let pergunta = perguntas[etapa].replace("{nome}",nome);
+        addMensagem(pergunta,"bot");
+    }
+    else{
+        gerarRelatorio();
+    }
+}
+
+function gerarRelatorio(){
+
+    let porcentagem = (pontuacao/10)*100;
+
+    addMensagem("<strong>RELATÓRIO FINAL</strong>","bot");
+    addMensagem("Candidato: "+nome,"bot");
+    addMensagem("Pontuação: "+pontuacao+"/10","bot");
+
+    addMensagem(
+        "<div class='progress-container'><div class='progress' style='width:"+porcentagem+"%'></div></div>",
+        "bot"
+    );
+
+    if(pontuacao>=7){
+        addMensagem("Perfil recomendado para próxima etapa.","bot");
+    }else{
+        addMensagem("Perfil em análise complementar.","bot");
+    }
+
+    addMensagem("Se selecionado, entraremos em contato.","bot");
+
+    addMensagem("<br><button onclick='exportarDados()'>Exportar Dados</button>","bot");
+
+    document.getElementById("input").disabled=true;
+    document.getElementById("btn").disabled=true;
+}
+
+function exportarDados(){
+
+    const dados = {
+        candidato: nome,
+        pontuacao: pontuacao,
+        respostas: respostas,
+        data: new Date().toLocaleString()
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + 
+        encodeURIComponent(JSON.stringify(dados, null, 2));
+
+    const download = document.createElement("a");
+    download.setAttribute("href", dataStr);
+    download.setAttribute("download", "entrevista_" + nome.replace(/\s/g,"_") + ".json");
+    document.body.appendChild(download);
+    download.click();
+    download.remove();
+}
+
+function enviar(){
+    const input=document.getElementById("input");
+    const texto=input.value.trim();
+    if(texto==="") return;
+
+    addMensagem(texto,"user");
+    input.value="";
+    proxima(texto);
+}
+
+document.getElementById("btn").addEventListener("click",enviar);
+
+document.getElementById("input").addEventListener("keydown",function(e){
+    if(e.key==="Enter"){
+        e.preventDefault();
+        enviar();
+    }
+});
+
+addMensagem(perguntas[0],"bot");
+
+</script>
+
+</body>
+</html>
